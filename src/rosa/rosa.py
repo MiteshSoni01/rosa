@@ -93,6 +93,7 @@ class ROSA:
         streaming: bool = True,
         max_iterations: int = 100,
         return_intermediate_steps: bool = False,
+        tool_modules: Optional[set] = None,  # add this
     ):
         self.__chat_history = []
         self.__ros_version = ros_version
@@ -105,7 +106,7 @@ class ROSA:
         self.__max_iterations = max_iterations
         self.__return_intermediate_steps = return_intermediate_steps
         self.__tools = self._get_tools(
-            ros_version, packages=tool_packages, tools=tools, blacklist=self.__blacklist
+            ros_version, packages=tool_packages, tools=tools, blacklist=self.__blacklist, tool_modules=tool_modules
         )
         self.__prompts = self._get_prompts(prompts)
         self.__agent = self._get_agent()
@@ -281,9 +282,9 @@ class ROSA:
         packages: Optional[list],
         tools: Optional[list],
         blacklist: Optional[list],
+        tool_modules: Optional[set],
     ) -> ROSATools:
-        """Create a ROSA tools object with the specified ROS version, tools, packages, and blacklist."""
-        rosa_tools = ROSATools(ros_version, blacklist=blacklist)
+        rosa_tools = ROSATools(ros_version, blacklist=blacklist, tool_modules=tool_modules)
         if tools:
             rosa_tools.add_tools(tools)
         if packages:
