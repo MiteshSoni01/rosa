@@ -13,6 +13,7 @@
 #  limitations under the License.
 
 import inspect
+import warnings
 from functools import wraps
 from typing import Literal, List, Optional, Set
 
@@ -89,6 +90,16 @@ class ROSATools:
         self.__ros_version = ros_version
         self.__blacklist = blacklist
         self.__tool_modules = tool_modules if tool_modules is not None else DEFAULT_MODULES
+
+        # Warn about unknown module names
+        unknown = self.__tool_modules - ALL_MODULES
+        if unknown:
+            warnings.warn(
+                f"Unknown tool module(s): {unknown}. "
+                f"Available modules: {ALL_MODULES}",
+                UserWarning,
+                stacklevel=2,
+            )
 
         if "calculation" in self.__tool_modules:
             from . import calculation
