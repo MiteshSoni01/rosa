@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import logging
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, AsyncIterable, Dict, Literal, Optional, Union
+from typing import TYPE_CHECKING, Any, AsyncIterable, Dict, Literal, Optional, Set, Union
 
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain.prompts import MessagesPlaceholder
@@ -61,8 +61,22 @@ class ROSA:
         show_token_usage (bool): Whether to show token usage. Does not work when streaming is enabled. Defaults to False.
         streaming (bool): Whether to stream the output of the agent. Defaults to True.
         max_iterations (int): Maximum number of iterations for the agent executor. Defaults to 100.
-        return_intermediate_steps (bool): Whether to return intermediate steps in the agent's execution. 
+        return_intermediate_steps (bool): Whether to return intermediate steps in the agent's execution.
             Setting to True increases memory usage but provides detailed execution traces. Defaults to False.
+        tool_modules (Optional[Set[str]]): Set of built-in module names to load.
+            Available modules: 'calculation', 'log', 'system', 'ros'.
+            Defaults to all modules when None. Pass an empty set to disable all
+            built-in tools and use only custom tools — useful for purpose-built
+            agents where ROS introspection tools are not needed and token
+            efficiency is important.
+
+            Example::
+
+                # Disable all built-in tools, use only custom tools
+                agent = ROSA(ros_version=1, llm=llm, tool_modules=set())
+
+                # Load only the calculation module
+                agent = ROSA(ros_version=1, llm=llm, tool_modules={"calculation"})
 
     Attributes:
         chat_history (list): A list of messages representing the chat history.
@@ -93,7 +107,7 @@ class ROSA:
         streaming: bool = True,
         max_iterations: int = 100,
         return_intermediate_steps: bool = False,
-        tool_modules: Optional[set] = None,  # add this
+        tool_modules: Optional[Set[str]] = None,
     ):
         self.__chat_history = []
         self.__ros_version = ros_version
@@ -282,8 +296,18 @@ class ROSA:
         packages: Optional[list],
         tools: Optional[list],
         blacklist: Optional[list],
-        tool_modules: Optional[set],
+        tool_modules: Optional[Set[str]],
     ) -> ROSATools:
+        """Create a ROSATools object with the specified ROS version, tools, packages, blacklist,
+        and optional tool module selection.
+
+        :param ros_version: ROS version (1 or 2).
+        :param packages: List of Python packages containing LangChain tool functions.
+        :param tools: List of additional LangChain tool functions.
+        :param blacklist: List of tool names to exclude.
+        :param tool_modules: Set of built-in module names to load. Pass empty set to
+            disable all built-in modules.
+        """
         rosa_tools = ROSATools(ros_version, blacklist=blacklist, tool_modules=tool_modules)
         if tools:
             rosa_tools.add_tools(tools)
