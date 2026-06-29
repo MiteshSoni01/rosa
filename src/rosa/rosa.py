@@ -108,6 +108,7 @@ class ROSA:
         max_iterations: int = 100,
         return_intermediate_steps: bool = False,
         tool_modules: Optional[Set[str]] = None,
+        use_default_prompts: bool = True, 
     ):
         self.__chat_history = []
         self.__ros_version = ros_version
@@ -122,7 +123,7 @@ class ROSA:
         self.__tools = self._get_tools(
             ros_version, packages=tool_packages, tools=tools, blacklist=self.__blacklist, tool_modules=tool_modules
         )
-        self.__prompts = self._get_prompts(prompts)
+        self.__prompts = self._get_prompts(prompts, use_default_prompts=use_default_prompts)
         self.__agent = self._get_agent()
         self.__executor = self._get_executor(verbose=verbose)
         # cache this check - no need to do isinstance on every invoke
@@ -316,16 +317,12 @@ class ROSA:
         return rosa_tools
 
     def _get_prompts(
-        self, robot_prompts: Optional[RobotSystemPrompts] = None
+        self, robot_prompts: Optional[RobotSystemPrompts] = None, use_default_prompts: bool = True
     ) -> ChatPromptTemplate:
         """Create a chat prompt template from the system prompts and robot-specific prompts."""
-        # Start with default system prompts
-        prompts = system_prompts
-
-        # Add robot-specific prompts if provided
+        prompts = system_prompts if use_default_prompts else []
         if robot_prompts:
             prompts.append(robot_prompts.as_message())
-
         template = ChatPromptTemplate.from_messages(
             prompts
             + [
